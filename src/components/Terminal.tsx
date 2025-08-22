@@ -5,11 +5,11 @@ import { ThemeContext } from "../contexts/ThemeContext";
 import { useClickOutsideEvent } from "../hooks/terminal";
 
 import Controls from "./Controls";
-import Editor from "./Editor";
+import Editor, { EditorHandle } from "./Editor";
 
 import Utils from "../common/Utils";
 
-interface TerminalProps {
+export interface TerminalProps {
   enableInput: boolean
   caret: boolean
   theme: string
@@ -17,13 +17,15 @@ interface TerminalProps {
   showControlButtons: boolean
   controlButtonLabels: string[]
   prompt: string
-  commands: Record<string, (...args: never) => void>
+  commands: Record<string, string | ((...args: never) => void)>
   welcomeMessage: string | (() => void) | React.ReactNode
   errorMessage: string | ((...args: never) => void) | React.ReactNode
-  defaultHandler: ((...args: never) => void) | null
-};
+  defaultHandler: ((...args: never) => void) | null,
+}
 
-const Terminal: React.FC<TerminalProps> = ({
+export type TerminalHandle = EditorHandle;
+
+const Terminal = React.forwardRef<TerminalHandle, TerminalProps>(({
   enableInput = true,
   caret = true,
   theme = "light",
@@ -35,11 +37,12 @@ const Terminal: React.FC<TerminalProps> = ({
   welcomeMessage = "",
   errorMessage = "not found!",
   defaultHandler = null,
-}) => {
+}, ref) => {
   const wrapperRef = React.useRef(null);
   const [consoleFocused, setConsoleFocused] = React.useState(!Utils.isMobile());
   const style = React.useContext(StyleContext);
   const themeStyles = React.useContext(ThemeContext);
+  const editorRef = React.useRef(undefined);
 
   useClickOutsideEvent(wrapperRef, consoleFocused, setConsoleFocused);
 
@@ -49,6 +52,7 @@ const Terminal: React.FC<TerminalProps> = ({
     controlButtonLabels={controlButtonLabels}/> : null;
 
   const editor = <Editor
+    ref={editorRef}
     caret={caret}
     consoleFocused={consoleFocused}
     prompt={prompt}
@@ -59,6 +63,10 @@ const Terminal: React.FC<TerminalProps> = ({
     showControlBar={showControlBar}
     defaultHandler={defaultHandler}
   />
+
+  React.useImperativeHandle(ref, () => ({
+    sendCommand: editorRef.current.sendCommand
+  }));
 
   return (
     <div
@@ -73,6 +81,6 @@ const Terminal: React.FC<TerminalProps> = ({
       </div>
     </div>
   );
-}
+});
 
 export default Terminal;

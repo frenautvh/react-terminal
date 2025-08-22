@@ -325,7 +325,11 @@ export const useCurrentLine = (
     defaultHandler
   );
 
-  return currentLine;
+  return {
+    currentLine,
+    setEditorInput,
+    setProcessCurrentLine,
+  };
 };
 
 export const useScrollToBottom = (changesToWatch: any, wrapperRef: any) => {

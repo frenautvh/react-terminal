@@ -8,7 +8,11 @@ import {
   useScrollToBottom,
 } from "../hooks/editor";
 
-export default function Editor(props: any) {
+export interface EditorHandle {
+  sendCommand: (command: string) => void;
+}
+
+const Editor = React.forwardRef<EditorHandle, any>((props, ref) => {
   const wrapperRef = React.useRef(null);
   const style = React.useContext(StyleContext);
   const themeStyles = React.useContext(ThemeContext);
@@ -28,7 +32,7 @@ export default function Editor(props: any) {
     defaultHandler
   } = props;
 
-  const currentLine = useCurrentLine(
+  const { currentLine, setEditorInput, setProcessCurrentLine } = useCurrentLine(
     caret,
     consoleFocused,
     prompt,
@@ -39,6 +43,13 @@ export default function Editor(props: any) {
     wrapperRef
   );
 
+  React.useImperativeHandle(ref, () => ({
+    sendCommand: (cmd: string) => {
+      setEditorInput(cmd);
+      setProcessCurrentLine(true);
+    }
+  }));
+
   return (
     <div id={"terminalEditor"} ref={wrapperRef} className={`${style.editor} ${!showControlBar ? style.curvedTop : null} ${showControlBar ? style.editorWithTopBar : null}`} style={{ background: themeStyles.themeBGColor }}>
       {welcomeMessage}
@@ -46,4 +57,6 @@ export default function Editor(props: any) {
       {currentLine}
     </div>
   );
-}
+});
+
+export default Editor;
